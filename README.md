@@ -12,10 +12,6 @@ The goal is to build a model that accurately predicts either:
 The code is structured into modules for data loading, feature engineering, model selection, training, and evaluation, promoting maintainability and scalability.
 
 ## File Structure
-content_copy
-download
-Use code with caution.
-Markdown
 
 emergency_response_prediction/
 ├── data/
