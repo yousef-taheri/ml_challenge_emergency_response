@@ -12,7 +12,7 @@ The goal is to build a model that accurately predicts either:
 The code is structured into modules for data loading, feature engineering, model selection, training, and evaluation, promoting maintainability and scalability.
 
 ## File Structure
-
+```
 emergency_response_prediction/
 ├── data/
 │ ├── x_train.csv
@@ -27,7 +27,7 @@ emergency_response_prediction/
 ├── config.py # Configuration file for paths and parameters.
 ├── requirements.txt # List of Python dependencies.
 ├── README.md # This file.
-
+```
 ## Dependencies
 
 The following Python libraries are required:
