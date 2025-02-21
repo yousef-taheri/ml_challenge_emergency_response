@@ -44,20 +44,17 @@ The following Python libraries are required:
 
 Install the dependencies using pip:
 
-```bash
+```
 pip install -r requirements.txt
-content_copy
-download
-Use code with caution.
-Data
+```
 
 The following data files are expected in the data/ directory:
 
-x_train.csv: Training data features.
+`x_train.csv`: Training data features.
 
-x_test.csv: Testing data features.
+`x_test.csv`: Testing data features.
 
-y_train_u9upqBE.csv: Training data target variables.
+`y_train_u9upqBE.csv`: Training data target variables.
 
 ## Usage
 
