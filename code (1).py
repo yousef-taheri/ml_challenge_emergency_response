@@ -1,0 +1,144 @@
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from sklearn.preprocessing import StandardScaler
+import numpy as np
+import pandas as pd
+from typing import Tuple
+
+def train_linear_regression(X_train, y_train):
+    """Trains a Linear Regression model."""
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    return model
+
+def train_random_forest(X_train, y_train):
+    """Trains a Random Forest Regressor model."""
+    model = RandomForestRegressor(random_state=42)
+    model.fit(X_train, y_train)
+    return model
+
+# Define a simple neural network
+class SimpleNN(nn.Module):
+    def __init__(self, input_size):
+        super(SimpleNN, self).__init__()
+        self.fc1 = nn.Linear(input_size, 64)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(64, 32)
+        self.relu2 = nn.ReLU()
+        self.fc3 = nn.Linear(32, 1)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.relu2(x)
+        x = self.fc3(x)
+        return x
+
+def train_pytorch_nn(X_train: pd.DataFrame, y_train: pd.Series, epochs: int = 100, batch_size: int = 32, learning_rate: float = 0.001) -> nn.Module:
+    """Trains a PyTorch neural network."""
+    # Convert data to numpy arrays and then to tensors
+    X_train_np = X_train.values.astype(np.float32)
+    y_train_np = y_train.values.astype(np.float32).reshape(-1, 1)
+
+    X_train_tensor = torch.tensor(X_train_np)
+    y_train_tensor = torch.tensor(y_train_np)
+
+    # Define the model
+    input_size = X_train.shape[1]
+    model = SimpleNN(input_size)
+
+    # Define the loss function and optimizer
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    # Training loop
+    model.train()
+    for epoch in range(epochs):
+        # Create mini-batches
+        for i in range(0, len(X_train_tensor), batch_size):
+            X_batch = X_train_tensor[i:i+batch_size]
+            y_batch = y_train_tensor[i:i+batch_size]
+
+            # Forward pass
+            outputs = model(X_batch)
+            loss = criterion(outputs, y_batch)
+
+            # Backward and optimize
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        if (epoch+1) % 10 == 0:
+            print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
+
+    return model
+
+def evaluate_model(model, X_test, y_test):
+    """Evaluates the model and returns evaluation metrics."""
+    y_pred = model.predict(X_test) if hasattr(model, 'predict') else model(torch.tensor(X_test.values.astype(np.float32))).detach().numpy()
+    mae = mean_absolute_error(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    r2 = r2_score(y_test, y_pred)
+
+    return mae, rmse, r2
+
+def select_best_model(models, X_val, y_val):
+    """Selects the best model based on validation performance (lowest MAE)."""
+    best_model = None
+    best_mae = float('inf')
+
+    for name, model in models.items():
+        mae, _, _ = evaluate_model(model, X_val, y_val)  # Only MAE is used for comparison
+        print(f"Model: {name}, MAE: {mae}")
+
+        if mae < best_mae:
+            best_mae = mae
+            best_model = model
+            best_model_name = name
+
+    print(f"Best model is {best_model_name} with MAE: {best_mae}")
+    return best_model, best_model_name
+
+if __name__ == '__main__':
+  # Example Usage
+  try:
+      from data_loader import load_data, merge_x_y
+      from feature_engineering import preprocess_data
+      from model_selection import split_data
+      # Load and preprocess data
+      x_train, x_test, y_train = load_data()
+      merged_train = merge_x_y(x_train, y_train)
+      X_train_processed, y_train_processed, encoder, scaler, imputer = preprocess_data(merged_train.copy(), is_train=True)
+      X_test_processed, encoder, scaler, imputer = preprocess_data(x_test.copy(), is_train=False, encoder=encoder, scaler=scaler, imputer=imputer)
+
+      # Split the training data into training and validation sets
+      X_train_split, X_val_split, y_train_split, y_val_split = split_data(X_train_processed, y_train_processed)
+      print("Training Linear Regression...")
+      linear_regression_model = train_linear_regression(X_train_split, y_train_split)
+      print("Training Random Forest...")
+      random_forest_model = train_random_forest(X_train_split, y_train_split)
+      print("Training Pytorch NN...")
+      pytorch_nn_model = train_pytorch_nn(X_train_split, y_train_split)
+
+      models = {
+          "Linear Regression": linear_regression_model,
+          "Random Forest": random_forest_model,
+          "PyTorch NN": pytorch_nn_model
+      }
+
+      best_model, best_model_name = select_best_model(models, X_val_split, y_val_split)
+
+      print(f"Best model selected: {best_model_name}")
+      print("Evaluate the best model with the test data...")
+      mae, rmse, r2 = evaluate_model(best_model, X_test_processed, y_train_processed)  # Assuming y_train is a proxy
+      print("MAE", mae)
+      print("RMSE", rmse)
+      print("R2", r2)
+
+  except Exception as e:
+      print(f"An error occurred: {e}")
