@@ -66,7 +66,8 @@ cd emergency_response_prediction
 pip install -r requirements.txt
 ```
 
-Place the data files (x_train.csv, x_test.csv, y_train_u9upqBE.csv) in the data/ directory.
+Place the data files (`x_train.csv`, `x_test.csv`, `y_train_u9upqBE.csv`) in the `data/` directory.
+**Note: for copy right purposes the data has been removed form this repository**
 
 Run the training script:
 
